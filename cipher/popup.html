@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Cipher</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@700;800&display=swap');
+    :root {
+      --bg: #0a0c10; --surface: #111318; --border: #1e2230;
+      --green: #00e5a0; --blue: #4da6ff; --dim: #4a5168; --text: #d4daf0; --sub: #6b7494;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 320px; min-height: 420px; max-height: 580px;
+      background: var(--bg); color: var(--text);
+      font-family: 'JetBrains Mono', monospace; font-size: 12px;
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    header {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 14px; border-bottom: 1px solid var(--border);
+      background: var(--surface); flex-shrink: 0;
+    }
+    .logo {
+      font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 800;
+      color: #fff; display: flex; align-items: center; gap: 6px;
+    }
+    .logo-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--green); box-shadow: 0 0 8px var(--green);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+    .spacer { flex: 1; }
+    .btn {
+      border: 1px solid var(--border); background: transparent; color: var(--sub);
+      font-family: inherit; font-size: 10px; padding: 4px 9px;
+      border-radius: 5px; cursor: pointer; transition: all .15s;
+    }
+    .btn:hover { border-color: var(--dim); color: var(--text); }
+    .btn.accent { border-color: var(--green); color: var(--green); }
+    .btn.accent:hover { background: rgba(0,229,160,.1); }
+    .btn.danger:hover { border-color: #ef4444; color: #ef4444; }
+
+    .username-section {
+      padding: 10px 14px; border-bottom: 1px solid var(--border);
+      background: var(--surface); flex-shrink: 0;
+    }
+    .username-label { font-size: 9px; color: var(--sub); letter-spacing: .06em; margin-bottom: 6px; }
+    .username-row { display: flex; gap: 6px; }
+    .username-row input {
+      flex: 1; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 5px; padding: 5px 8px; color: var(--text);
+      font-family: inherit; font-size: 11px; outline: none; transition: border-color .15s;
+    }
+    .username-row input:focus { border-color: var(--dim); }
+    .username-row input.saved { border-color: var(--green); }
+
+    .status-bar {
+      display: flex; align-items: center; gap: 7px;
+      padding: 6px 14px; border-bottom: 1px solid var(--border);
+      font-size: 10px; color: var(--sub); flex-shrink: 0;
+    }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--dim); }
+    .status-dot.capturing { background: var(--green); box-shadow: 0 0 6px var(--green); }
+    .status-dot.idle      { background: #f59e0b; }
+    .status-dot.waiting   { background: var(--blue); }
+
+    #move-list {
+      flex: 1; overflow-y: auto; padding: 8px 14px;
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    #move-list::-webkit-scrollbar { width: 4px; }
+    #move-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .move-row {
+      display: grid; grid-template-columns: 26px 1fr 1fr;
+      align-items: center; gap: 6px;
+      padding: 3px 6px; border-radius: 4px;
+    }
+    .move-row:hover { background: var(--surface); }
+    .move-num { color: var(--dim); font-size: 10px; text-align: right; }
+    .move-cell {
+      font-size: 13px; font-weight: 600; padding: 3px 8px;
+      border-radius: 4px; text-align: center;
+    }
+    .move-cell.white { color: #fff; background: rgba(255,255,255,.07); }
+    .move-cell.black { color: var(--blue); background: rgba(77,166,255,.08); }
+    .move-cell.empty { opacity: 0; }
+
+    .empty-state {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 8px; color: var(--dim); text-align: center; padding: 30px;
+    }
+    .empty-state .icon { font-size: 28px; opacity: .4; }
+    .empty-state h3 { font-family: 'Syne', sans-serif; font-size: 13px; color: var(--sub); }
+    .empty-state p  { font-size: 10px; line-height: 1.6; }
+
+    footer {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 14px; border-top: 1px solid var(--border);
+      background: var(--surface); font-size: 10px; color: var(--sub); flex-shrink: 0;
+    }
+
+    #toast {
+      position: fixed; bottom: 36px; left: 50%;
+      transform: translateX(-50%) translateY(6px);
+      background: var(--surface); border: 1px solid var(--green); color: var(--green);
+      font-family: inherit; font-size: 10px; padding: 5px 14px;
+      border-radius: 20px; opacity: 0; transition: opacity .2s, transform .2s;
+      pointer-events: none;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    #toast.error { border-color: #ef4444; color: #ef4444; }
+  </style>
+</head>
+<body>
+  <header>
+    <span class="logo"><span class="logo-dot"></span>CIPHER</span>
+    <span id="move-count" style="color:var(--sub);font-size:10px">0 moves</span>
+    <span class="spacer"></span>
+    <button class="btn danger" id="clear-btn">✕ Clear</button>
+  </header>
+
+  <div class="username-section">
+    <div class="username-label">LICHESS USERNAME</div>
+    <div class="username-row">
+      <input type="text" id="username-input" placeholder="e.g. Magnus2882" autocomplete="off" spellcheck="false" />
+      <button class="btn accent" id="save-btn">Save</button>
+    </div>
+  </div>
+
+  <div class="status-bar">
+    <span class="status-dot" id="status-dot"></span>
+    <span id="status-text">Enter your username to begin</span>
+  </div>
+
+  <div id="move-list">
+    <div class="empty-state" id="empty">
+      <div class="icon">♟</div>
+      <h3>Waiting for moves</h3>
+      <p>Enter your username above,<br/>then start a game on Lichess.</p>
+    </div>
+  </div>
+
+  <footer>
+    <span id="stat-white" style="color:#fff">White: 0</span>
+    <span>·</span>
+    <span id="stat-black" style="color:var(--blue)">Black: 0</span>
+    <span class="spacer"></span>
+    <span id="result"></span>
+  </footer>
+
+  <div id="toast"></div>
+  <script src="popup.js"></script>
+</body>
+</html>
