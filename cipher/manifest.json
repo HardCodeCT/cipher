@@ -2,9 +2,17 @@
   "manifest_version": 3,
   "name": "Cipher",
   "version": "1.0.0",
-  "description": "Lichess engine assistant",
-  "permissions": ["storage", "tabs", "scripting", "downloads"],
-  "host_permissions": ["https://lichess.org/*"],
+  "description": "Chess coach for casual chess games to improve pattern recognition, do not use in rated games!",
+  "permissions": ["storage", "tabs", "scripting", "downloads", "alarms"],
+  "host_permissions": [
+    "https://lichess.org/*",
+    "https://www.chess.com/*",
+    "https://chess.com/*",
+    "https://cipher-15f64-default-rtdb.asia-southeast1.firebasedatabase.app/*",
+    "https://identitytoolkit.googleapis.com/*",
+    "https://securetoken.googleapis.com/*",
+    "https://cipherad-ten.vercel.app/*"
+  ],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
@@ -19,15 +27,31 @@
   "content_scripts": [
     {
       "matches": ["https://lichess.org/*"],
-      "js": ["content.js"],
+      "js": ["injected.js"],
+      "run_at": "document_start",
+      "world": "MAIN",
+      "all_frames": true
+    },
+    {
+      "matches": [
+        "https://lichess.org/*",
+        "https://www.chess.com/*",
+        "https://chess.com/*"
+      ],
+      "js": ["utils.js", "content.js"],
       "run_at": "document_start",
       "all_frames": true
+    },
+    {
+      "matches": ["https://cipherad-ten.vercel.app/*"],
+      "js": ["ad-click.js"],
+      "run_at": "document_idle"
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": ["injected.js"],
-      "matches": ["https://lichess.org/*"]
+      "resources": ["icons/icon16.png", "icons/icon48.png", "icons/icon128.png", "knight.png", "injected.js", "fonts/AfacadFlux-Regular.woff2"],
+      "matches": ["https://lichess.org/*", "https://www.chess.com/*", "https://chess.com/*"]
     }
   ],
   "icons": {

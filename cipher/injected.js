@@ -22,9 +22,9 @@
   window.WebSocket = function (...args) {
     const ws  = new OriginalWebSocket(...args);
     const url = args[0];
-    ws.addEventListener('open',    ()  => dispatch('OPEN',     url, 'Connection established'));
-    ws.addEventListener('close',   e   => dispatch('CLOSE',    url, `Closed (code ${e.code})`));
-    ws.addEventListener('message', e   => dispatch('RECEIVED', url, e.data));
+    ws.addEventListener('open',  () => dispatch('OPEN',  url, 'Connection established'));
+    ws.addEventListener('close', e  => dispatch('CLOSE', url, `Closed (code ${e.code})`));
+    ws.addEventListener('message', e => dispatch('RECEIVED', url, e.data));
     const origSend = ws.send.bind(ws);
     ws.send = function (data) { dispatch('SENT', url, data); origSend(data); };
     return ws;
@@ -32,7 +32,7 @@
   Object.keys(OriginalWebSocket).forEach(k => window.WebSocket[k] = OriginalWebSocket[k]);
   window.WebSocket.prototype = OriginalWebSocket.prototype;
 
-  // ── History patch — content.js can't touch history so we do it here ─────────
+  // ── History patch ─────────────────────────────────────────────────────────
   function notifyNav() {
     window.postMessage({ __wsNavigation: true, url: location.href }, '*');
   }
@@ -42,5 +42,4 @@
   history.replaceState = function (...a) { _replace(...a); notifyNav(); };
   window.addEventListener('popstate', notifyNav);
 
-  console.log('[Cipher] Active ✓');
 })();
